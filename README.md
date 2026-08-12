@@ -1,6 +1,6 @@
 # claude-code-protocols
 
-A production-tested protocol system for Claude Code that eliminates wasted tokens, lost context between sessions, and repeated mistakes.
+A production-tested protocol system for Claude Code that reduces wasted context, prevents repeated mistakes, and gives Claude persistent memory across sessions.
 
 Built from real project experience — not theory.
 
@@ -9,20 +9,20 @@ Built from real project experience — not theory.
 ## The problem
 
 Claude Code is powerful but stateless. Without structure:
-- Every session starts from scratch
-- The same mistakes happen again and again
-- Claude reads the wrong files, in the wrong order, using the wrong tools
-- Architectural decisions get "improved" by an agent that doesn't know they were already tried
+- Every session starts from scratch — Claude re-derives context you already established
+- Architectural decisions get "improved" by an agent that doesn't know they were already tried and failed
+- Code navigation defaults to reading full files instead of jumping to exact symbols
+- Library code gets written from training data, not current docs
 
 ## The solution
 
-Two-level documentation that gives Claude the right context, in the right order, every time.
+Four-layer documentation that gives Claude the right context, in the right order, every time.
 
 ```
-~/.claude/CLAUDE.md          ← global: HOW to work (navigation, library, session protocols)
-your-project/CLAUDE.md       ← project: WHAT to know (stack, restrictions, patterns)
-your-project/AGENT_START_HERE.md  ← current status, infra, what's in progress
+~/.claude/CLAUDE.md               ← HOW to work: navigation, library, session protocols
+your-project/CLAUDE.md            ← WHAT to know: stack, restrictions, critical patterns
 your-project/PROGRESS_LOG.md      ← decision history: why the code is the way it is
+your-project/AGENT_START_HERE.md  ← current status, infra, what's in progress
 ```
 
 ---
@@ -47,12 +47,12 @@ claude-code-protocols/
 
 ### 1. Install MCP servers
 
-See [setup/mcp-setup.md](setup/mcp-setup.md) for full instructions.
-
 ```bash
 npm install -g codebase-memory-mcp
-npm install -g @context7/mcp
+npm install -g @upstash/context7-mcp
 ```
+
+See [setup/mcp-setup.md](setup/mcp-setup.md) for configuration details.
 
 ### 2. Set up global CLAUDE.md
 
@@ -86,31 +86,38 @@ Update the "Indexed projects" table in `~/.claude/CLAUDE.md`.
 
 ## How it works
 
-### Code navigation (the core protocol)
+### Code navigation
 
-Instead of reading files blindly, Claude follows a strict chain:
+Instead of reading files blindly, Claude follows a priority chain:
 
 ```
 search_graph → get_code_snippet → trace_path → Read (last resort)
 ```
 
-This cuts token usage by 60–80% on code exploration tasks. The graph finds the exact function in milliseconds; Claude reads only what it needs.
+For source code: the graph finds the exact function in one call — Claude reads only what it needs. For configs, markdown, SQL, and other non-indexed files, standard tools like `grep` or `Read` are appropriate.
 
 ### Session continuity
 
-`AGENT_START_HERE.md` is the first thing Claude reads — it knows immediately what's in production, what's in progress, and what's blocked. No re-deriving context.
-
 `PROGRESS_LOG.md` prevents repeated mistakes. Every non-obvious architectural decision is logged with *why* — so Claude doesn't "improve" something that was already tried and failed.
 
-### Two-level documentation
+`AGENT_START_HERE.md` surfaces current project state immediately — what's in production, what's in progress, what's blocked.
 
-Global `CLAUDE.md` defines *how* to work — protocols that apply everywhere. Project `CLAUDE.md` defines *what* to know — stack, restrictions, deployment, patterns. No duplication, clear hierarchy.
+### Four-layer documentation
+
+| Layer | File | Purpose |
+|---|---|---|
+| Global | `~/.claude/CLAUDE.md` | HOW to work — applies to every project |
+| Project rules | `project/CLAUDE.md` | WHAT to know — stack, deploy, restrictions |
+| Decision log | `PROGRESS_LOG.md` | WHY code is the way it is |
+| Current state | `AGENT_START_HERE.md` | Status, infra, open tasks |
+
+Each layer has a distinct job. No duplication between them.
 
 ---
 
-## The navigation protocol in detail
+## The navigation protocol
 
-The global CLAUDE.md enforces this decision tree for any code exploration:
+Decision table embedded in the global CLAUDE.md:
 
 | Task | Tool |
 |---|---|
@@ -119,19 +126,14 @@ The global CLAUDE.md enforces this decision tree for any code exploration:
 | Read function source | `get_code_snippet(qualified_name="project.module.function")` |
 | Who calls X | `trace_path(function_name="X", mode="calls")` |
 | What X calls | `trace_path(function_name="X")` |
-| Text pattern | `search_code(pattern="asyncio.to_thread")` |
+| Text/pattern in any file | `search_code(pattern="asyncio.to_thread")` |
 | Project structure | `get_architecture(project="...")` |
-
-**STOP rules** embedded in the protocol:
-- Got a `qualified_name` → use `get_code_snippet`, never `Read` by line range
-- `search_code` only if `search_graph` found nothing
-- Never read a full file when you have a line number — `Read[offset=N, limit=30]` max
 
 ---
 
 ## PROGRESS_LOG format
 
-Every non-obvious decision gets logged:
+Every non-obvious decision gets a structured entry:
 
 ```markdown
 ### Decision name (YYYY-MM-DD)
@@ -140,7 +142,7 @@ Every non-obvious decision gets logged:
 **DO NOT CHANGE because:** What breaks if reverted.
 ```
 
-The pinned table at the top surfaces the most critical decisions immediately — the ones where "improving" without context causes production incidents.
+The pinned table at the top surfaces the most critical decisions — the ones where "improving" without context causes production incidents.
 
 ---
 
@@ -150,18 +152,26 @@ After any non-trivial session:
 
 1. **PROGRESS_LOG.md** — add entry if: provider/model change, architecture change, non-trivial bug, rejected "obvious" solution
 2. **AGENT_START_HERE.md** — update date, session number, current status
-3. **Graph** — `index_repository` if files were added or renamed
+3. **Graph** — `index_repository` if source files were added or renamed
 
 ---
 
-## Why this works
+## What made this necessary
 
-This system was built over dozens of sessions on a real production project. The protocols were derived from actual failure modes:
+This system was built over dozens of sessions on a real production project. The patterns came from actual failures:
 
-- Claude using `Read` on a 500-line file to find a 10-line function → fixed by mandatory `search_graph` first
+- Claude using `Read` on a 500-line file to find a 10-line function → fixed by `search_graph` first
 - The same architectural mistake made three sessions in a row → fixed by PROGRESS_LOG pinned table
-- Context lost between sessions requiring 20 minutes of re-derivation → fixed by AGENT_START_HERE
-- Library code written from training data instead of current docs → fixed by Context7 protocol
+- Context lost between sessions, requiring significant re-derivation → fixed by AGENT_START_HERE
+- Library code written from stale training data → fixed by Context7 protocol
+
+---
+
+## Compatibility
+
+- **Claude Code**: tested with Claude Sonnet 4.x and above
+- **codebase-memory-mcp**: v0.10+, supports 158 languages
+- **Context7 (`@upstash/context7-mcp`)**: v4.0+
 
 ---
 
@@ -170,3 +180,9 @@ This system was built over dozens of sessions on a real production project. The 
 The protocols are general — the templates are starting points. Adapt to your stack and document what actually broke in your project.
 
 If you add a pattern from a real production incident, it belongs in `PROGRESS_LOG.md` and optionally in the project `CLAUDE.md` as a critical pattern.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

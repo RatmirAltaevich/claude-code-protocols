@@ -18,7 +18,7 @@ It applies to **every project** you open in Claude Code.
 
 **STOP rules:**
 - Got `qualified_name` → `get_code_snippet`. Do NOT read file by offset/range.
-- `search_code(pattern)` — only if `search_graph` found nothing.
+- `search_code(pattern)` — only if `search_graph` found nothing. For configs, markdown, SQL, templates, and other non-indexed files, `search_code` or `Read` directly is fine.
 - Found `file_path + line` → `Read[offset=line-2, limit=30]` max, not the whole file.
 - Graph can't find an existing function → `index_repository` → retry.
 
@@ -112,12 +112,6 @@ Do NOT write: routine edits, things obvious from the code, descriptions of what 
 
 ---
 
-## 6. Scope
-
-If the task does not require reading project files (texts, marketing, strategy, copywriting, service comparisons) — redirect to a general-purpose LLM. Do not waste context on non-technical work.
-
----
-
-## 7. Autonomy
+## 6. Autonomy
 
 Work fully autonomously. Ask only when data is physically unknown: logins, passwords, IDs not present in the project.

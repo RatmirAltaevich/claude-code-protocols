@@ -6,7 +6,7 @@ Two MCP servers power the code navigation protocol: **codebase-memory-mcp** (cod
 
 ## 1. codebase-memory-mcp
 
-Builds a navigable graph of your codebase — functions, classes, imports, call chains. Replaces grep/find for code discovery.
+Builds a navigable graph of your codebase — functions, classes, imports, call chains.
 
 ### Install
 
@@ -16,18 +16,25 @@ npm install -g codebase-memory-mcp
 
 ### Configure in Claude Code
 
-Add to `~/.claude/settings.json` (or via `/mcp` in Claude Code):
+The recommended way is via the Claude Code CLI:
+
+```bash
+claude mcp add codebase-memory-mcp
+```
+
+Alternatively, add manually to `~/.claude.json` under `mcpServers`:
 
 ```json
 {
   "mcpServers": {
     "codebase-memory-mcp": {
-      "command": "codebase-memory-mcp",
-      "args": []
+      "command": "codebase-memory-mcp"
     }
   }
 }
 ```
+
+> **Note:** Claude Code settings file locations follow the [official Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/settings). User-level MCP config lives in `~/.claude.json`; project-level in `.mcp.json` at the project root.
 
 ### Index your project
 
@@ -54,22 +61,28 @@ Add your project to `global/CLAUDE.md` → "Indexed projects" table after indexi
 
 ## 2. Context7
 
-Fetches up-to-date documentation for any library — directly from official sources, not from the model's training data.
+Fetches current library documentation indexed from official sources.
 
 ### Install
 
 ```bash
-npm install -g @context7/mcp
+npm install -g @upstash/context7-mcp
 ```
 
 ### Configure
+
+```bash
+claude mcp add context7 -- npx @upstash/context7-mcp
+```
+
+Or manually in `~/.claude.json`:
 
 ```json
 {
   "mcpServers": {
     "context7": {
-      "command": "context7-mcp",
-      "args": []
+      "command": "npx",
+      "args": ["@upstash/context7-mcp"]
     }
   }
 }
@@ -82,13 +95,13 @@ resolve-library-id(libraryName="aiogram")
 get-library-docs(context7CompatibleLibraryID="/aiogram/aiogram", topic="FSM states")
 ```
 
-Always use before writing code with any external library, especially ones with breaking changes between major versions.
+Use before writing code with any library that has frequent breaking changes between major versions.
 
 ---
 
 ## 3. Auto-memory (optional but recommended)
 
-Claude Code supports a file-based memory system at `~/.claude/projects/<project-id>/memory/`. Combined with `MEMORY.md` as an index, this gives Claude persistent context across sessions.
+Claude Code has a built-in file-based memory system at `~/.claude/projects/<project-id>/memory/`. See [Claude Code memory docs](https://docs.anthropic.com/en/docs/claude-code/memory) for details.
 
 The global `CLAUDE.md` in this repo uses this system. To enable:
 
@@ -108,6 +121,6 @@ After setup, confirm everything works in a Claude Code session:
 # Should return your indexed project's nodes
 search_graph(name_pattern=".*", project="my-project", limit=5)
 
-# Should return library documentation
+# Should return a library ID
 resolve-library-id(libraryName="requests")
 ```
