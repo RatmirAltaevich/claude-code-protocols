@@ -3,6 +3,8 @@
 # Does NOT modify STATE.md, run tests, or archive changes.
 # Exits silently if .protocol/ does not exist.
 
+set -euo pipefail
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 PROTOCOL_DIR="$PROJECT_DIR/.protocol"
 
@@ -19,60 +21,75 @@ try:
     print(d.get('session_id', 'unknown'))
 except Exception:
     print('unknown')
-" <<< "$input" 2>/dev/null)
+" <<< "$input")
 session_id="${session_id:-unknown}"
 
 SESSION_DIR="$PROTOCOL_DIR/runtime/$session_id"
-mkdir -p "$SESSION_DIR"
 
-# Gather git state
-branch=$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-commit=$(git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-dirty=$(git -C "$PROJECT_DIR" diff --quiet 2>/dev/null && echo false || echo true)
-
-# Modified files from git + tracked runtime files
-git_modified=$(git -C "$PROJECT_DIR" diff --name-only HEAD 2>/dev/null | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip().splitlines()))")
-tracked_file="$SESSION_DIR/tracked-files.txt"
-if [ -f "$tracked_file" ]; then
-  runtime_modified=$(python3 -c "import json; lines=[l.strip() for l in open('$tracked_file') if l.strip()]; print(json.dumps(lines))")
-else
-  runtime_modified="[]"
+# If handoff already ran for this session, clean up and skip recovery.
+if [ -f "$SESSION_DIR/handoff-complete" ]; then
+  rm -rf "$SESSION_DIR"
+  exit 0
 fi
 
+mkdir -p "$SESSION_DIR"
+
+# Dirty = any tracked change (staged, unstaged, untracked)
+if [ -n "$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null)" ]; then
+  dirty=true
+else
+  dirty=false
+fi
+
+branch=$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+commit=$(git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+ended_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Modified files: git status (staged + unstaged + untracked) + runtime tracked files
+python3 - <<PYEOF
+import json, subprocess, os
+
+session_dir = "$SESSION_DIR"
+project_dir = "$PROJECT_DIR"
+tracked_path = os.path.join(session_dir, "tracked-files.txt")
+
+# Files from git status --porcelain
+try:
+    result = subprocess.run(
+        ["git", "-C", project_dir, "status", "--porcelain"],
+        capture_output=True, text=True
+    )
+    git_files = [line[3:].strip() for line in result.stdout.splitlines() if line.strip()]
+except Exception:
+    git_files = []
+
+# Files from runtime tracker
+runtime_files = []
+if os.path.exists(tracked_path):
+    with open(tracked_path) as f:
+        runtime_files = [l.strip() for l in f if l.strip()]
+
+all_modified = sorted(set(git_files + runtime_files))
+
 # Active changes
-active_changes=$(
-  find "$PROTOCOL_DIR/changes/active" -name 'CHG-*.md' 2>/dev/null \
-    | xargs -I{} basename {} .md \
-    | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip().splitlines()))"
-)
-
-ended_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
-
-python3 -c "
-import json, sys
-
-session_id = '$session_id'
-ended_at = '$ended_at'
-branch = '$branch'
-commit = '$commit'
-dirty = $dirty
-
-git_modified = $git_modified
-runtime_modified = $runtime_modified
-active_changes = $active_changes
-
-all_modified = sorted(set(git_modified + runtime_modified))
+changes_dir = os.path.join(project_dir, ".protocol", "changes", "active")
+active_changes = []
+if os.path.isdir(changes_dir):
+    active_changes = sorted(
+        f[:-3] for f in os.listdir(changes_dir)
+        if f.startswith("CHG-") and f.endswith(".md")
+    )
 
 snapshot = {
-    'sessionId': session_id,
-    'endedAt': ended_at,
-    'branch': branch,
-    'commit': commit,
-    'dirty': dirty,
-    'modifiedFiles': all_modified,
-    'activeChanges': active_changes
+    "sessionId": "$session_id",
+    "endedAt": "$ended_at",
+    "branch": "$branch",
+    "commit": "$commit",
+    "dirty": json.loads("$dirty"),
+    "modifiedFiles": all_modified,
+    "activeChanges": active_changes,
 }
 
-with open('$SESSION_DIR/recovery.json', 'w') as f:
+with open(os.path.join(session_dir, "recovery.json"), "w") as f:
     json.dump(snapshot, f, indent=2)
-" 2>/dev/null || true
+PYEOF

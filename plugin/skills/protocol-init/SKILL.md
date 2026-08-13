@@ -79,12 +79,14 @@ Copy `${CLAUDE_PLUGIN_ROOT}/templates/config.yaml` and fill in detected values:
 
 ## Step 5 — Create STATE.md
 
-Copy `${CLAUDE_PLUGIN_ROOT}/templates/STATE.md` and fill in:
+**If `.protocol/STATE.md` already exists: skip entirely.** Never overwrite user content on re-init.
+
+If the file does not exist, copy `${CLAUDE_PLUGIN_ROOT}/templates/STATE.md` and fill in:
 - `Updated`: today's date
 - `Branch`: current git branch (`git rev-parse --abbrev-ref HEAD`)
-- `Last verified`: `— not-run`
+- `Last verified`: `—, not-run`
 
-If `AGENT_START_HERE.md` exists: offer to migrate.
+If `AGENT_START_HERE.md` exists and STATE.md does not exist yet: offer to migrate.
 
 **If migrating**: extract the "Current status" / "Текущий статус" section into STATE.md format. Skip infrastructure details (env vars, API routes, DB schema, package versions) — those belong in the code and docs, not STATE.md.
 
@@ -92,9 +94,11 @@ If `AGENT_START_HERE.md` exists: offer to migrate.
 
 ## Step 6 — Create DECISIONS.md
 
-Copy `${CLAUDE_PLUGIN_ROOT}/templates/DECISIONS.md`.
+**If `.protocol/DECISIONS.md` already exists: skip entirely.** Never replace existing decisions on re-init.
 
-If `PROGRESS_LOG.md` exists: offer to migrate.
+If the file does not exist, copy `${CLAUDE_PLUGIN_ROOT}/templates/DECISIONS.md`.
+
+If `PROGRESS_LOG.md` exists and DECISIONS.md does not exist yet: offer to migrate.
 
 **If migrating**: convert each entry. Mapping:
 - `**Решение:**` / `**Decision:**` → `### Decision`

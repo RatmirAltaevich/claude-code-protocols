@@ -7,16 +7,20 @@ Status values: `Active` | `Superseded` | `Retired`
 Critical decisions that must be checked before related changes.
 Add a row here whenever a decision has a "Do not change because" that applies to a broad area.
 
+<!-- Example row (remove this comment and add real rows):
+| D-NNN | Decision summary | area | `src/path/` |
+-->
+
 | ID | Decision | Area | Related code |
 |---|---|---|---|
-| <!-- D-001 | Example: keep generation synchronous | generation | `src/generation/` --> |
 
 ---
 
 ## Entries
 
-<!--
-## D-001 — Example: keep generation synchronous
+<!-- Example entry (replace D-NNN with the actual number when adding):
+
+## D-NNN — Example: keep generation synchronous
 
 Status: Active
 Date: YYYY-MM-DD

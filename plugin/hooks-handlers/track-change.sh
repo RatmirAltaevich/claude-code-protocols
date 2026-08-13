@@ -12,17 +12,24 @@ fi
 
 input=$(cat)
 
-# Extract file_path and session_id from hook input JSON
-read -r file_path session_id <<< "$(python3 -c "
+# Extract fields in separate calls to avoid read splitting on spaces in file paths.
+file_path=$(python3 -c "
 import sys, json
 try:
     d = json.loads(sys.stdin.read())
-    fp = d.get('tool_input', {}).get('file_path', '')
-    sid = d.get('session_id', 'unknown')
-    print(fp, sid)
+    print(d.get('tool_input', {}).get('file_path', ''), end='')
 except Exception:
-    print('', 'unknown')
-" <<< "$input" 2>/dev/null)"
+    pass
+" <<< "$input" 2>/dev/null)
+
+session_id=$(python3 -c "
+import sys, json
+try:
+    d = json.loads(sys.stdin.read())
+    print(d.get('session_id', 'unknown'), end='')
+except Exception:
+    print('unknown', end='')
+" <<< "$input" 2>/dev/null)
 
 if [ -z "$file_path" ]; then
   exit 0

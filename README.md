@@ -62,7 +62,7 @@ High-risk (auth, payments, etc.) →  CHANGE.md + plan approval
 Epic (new subsystem)             →  extended planning
 ```
 
-Risk keywords are configurable in `.protocol/config.yaml`.
+Risk categories are configurable in `.protocol/config.yaml`.
 
 ## DECISIONS.md — why this matters
 
@@ -97,7 +97,7 @@ Only what cannot be derived from the code:
 Updated: 2026-08-13
 Branch: main
 Active change: CHG-003
-Last verified commit: 2109860
+Last verified: 2109860 + clean worktree, 2026-08-14, passed
 
 ## Current
 Auth and generation working in prod. Payment flow in test.
