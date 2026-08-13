@@ -1,191 +1,154 @@
-# claude-code-protocols
+# Continuity Protocol
 
-A production-tested protocol system for Claude Code that reduces wasted context, prevents repeated mistakes, and gives Claude persistent memory across sessions.
+> Memory always. Specification when needed. No duplicate source of truth.
 
-Built from real project experience — not theory.
+A Claude Code plugin that gives any project persistent memory and an adaptive workflow — without duplicating what the code already knows.
 
----
-
-## The problem
-
-Claude Code has built-in auto-memory, but it does not replace explicit, repository-shared project documentation. Without structure:
-- New sessions may lack the explicit project state and decision history needed for consistent work
-- Architectural decisions get "improved" by an agent that doesn't know they were already tried and failed
-- Code navigation defaults to reading full files instead of jumping to exact symbols
-- Library code gets written from training data, not current docs
-
-## The solution
-
-Four-layer documentation that gives Claude the right context, in the right order, every time.
+## Install
 
 ```
-~/.claude/CLAUDE.md               ← HOW to work: navigation, library, session protocols
-your-project/CLAUDE.md            ← WHAT to know: stack, restrictions, critical patterns
-your-project/PROGRESS_LOG.md      ← decision history: why the code is the way it is
-your-project/AGENT_START_HERE.md  ← current status, infra, what's in progress
+/plugin marketplace add RatmirAltaevich/claude-code-protocols
+/plugin install continuity
 ```
 
----
-
-## What's included
+Then in your project:
 
 ```
-claude-code-protocols/
-├── global/
-│   └── CLAUDE.md              # Drop into ~/.claude/CLAUDE.md
-├── templates/
-│   ├── project-CLAUDE.md      # Project-level instructions template
-│   ├── AGENT_START_HERE.md    # Infrastructure + current status template
-│   └── PROGRESS_LOG.md        # Decision log template
-└── setup/
-    └── mcp-setup.md           # codebase-memory-mcp + Context7 installation
+/continuity:protocol-init
 ```
 
----
+That's it. The skill detects your project type, finds existing docs, creates `.protocol/`, and adds a managed block to `CLAUDE.md`.
 
-## Quickstart
+## What it does
 
-### 1. Install and register MCP servers
+After init, every Claude Code session automatically sees your current state and open changes (via a `SessionStart` hook). You get four slash commands:
 
-```bash
-npm install -g codebase-memory-mcp
+| Command | When to use |
+|---------|-------------|
+| `/continuity:protocol-work` | Start of any non-trivial task |
+| `/continuity:protocol-handoff` | End of session or after a major task |
+| `/continuity:protocol-audit` | Periodic health check |
+| `/continuity:protocol-init` | First time setup (re-runnable) |
 
-claude mcp add --transport stdio codebase-memory-mcp --scope user -- codebase-memory-mcp
-claude mcp add --transport stdio context7 --scope user -- npx -y @upstash/context7-mcp@latest
-```
-
-See [setup/mcp-setup.md](setup/mcp-setup.md) for manual configuration and verification.
-
-### 2. Set up global CLAUDE.md
-
-```bash
-cp global/CLAUDE.md ~/.claude/CLAUDE.md
-```
-
-Edit the "Indexed projects" table to add your project paths.
-
-### 3. Add project files
-
-```bash
-cp templates/project-CLAUDE.md your-project/CLAUDE.md
-cp templates/AGENT_START_HERE.md your-project/AGENT_START_HERE.md
-cp templates/PROGRESS_LOG.md your-project/PROGRESS_LOG.md
-```
-
-Fill in the placeholders. The more accurate these are, the better Claude performs.
-
-### 4. Index your codebase
-
-In a Claude Code session:
+## What gets created
 
 ```
-index_repository(repo_path="/path/to/my-project", name="my-project")
+your-project/
+├── CLAUDE.md                          ← gets a managed block added
+└── .protocol/
+    ├── config.yaml                    ← project name, commands, risk config
+    ├── STATE.md                       ← current state (branch, in-progress, next)
+    ├── DECISIONS.md                   ← architectural decisions with status
+    ├── changes/
+    │   ├── active/CHG-001.md          ← open changes
+    │   └── archive/2026/CHG-001.md   ← completed changes
+    └── runtime/                       ← gitignored session data
 ```
 
-Update the "Indexed projects" table in `~/.claude/CLAUDE.md`.
+## Adaptive workflow
 
----
-
-## How it works
-
-### Code navigation
-
-Instead of reading files blindly, Claude follows a priority chain:
+Tasks are classified by size and risk:
 
 ```
-search_graph → get_code_snippet → trace_path → Read (last resort)
+Small task (1-2 files, no risk)  →  execute directly
+Standard task                    →  CHANGE.md, then proceed
+High-risk (auth, payments, etc.) →  CHANGE.md + plan approval
+Epic (new subsystem)             →  extended planning
 ```
 
-For source code: the graph finds the exact function in one call — Claude reads only what it needs. For configs, markdown, SQL, and other non-indexed files, standard tools like `grep` or `Read` are appropriate.
+Risk keywords are configurable in `.protocol/config.yaml`.
 
-### Session continuity
+## DECISIONS.md — why this matters
 
-`PROGRESS_LOG.md` prevents repeated mistakes. Every non-obvious architectural decision is logged with *why* — so Claude doesn't "improve" something that was already tried and failed.
-
-`AGENT_START_HERE.md` surfaces current project state immediately — what's in production, what's in progress, what's blocked.
-
-### Four-layer documentation
-
-| Layer | File | Purpose |
-|---|---|---|
-| Global | `~/.claude/CLAUDE.md` | HOW to work — applies to every project |
-| Project rules | `project/CLAUDE.md` | WHAT to know — stack, deploy, restrictions |
-| Decision log | `PROGRESS_LOG.md` | WHY code is the way it is |
-| Current state | `AGENT_START_HERE.md` | Status, infra, open tasks |
-
-Each layer has a distinct job. No duplication between them.
-
----
-
-## The navigation protocol
-
-Decision table embedded in the global CLAUDE.md:
-
-| Task | Tool |
-|---|---|
-| Find function by name | `search_graph(name_pattern="my_function")` |
-| Find by behavior | `search_graph(query="upload handler that resizes images")` |
-| Read function source | `get_code_snippet(qualified_name="project.module.function")` |
-| Who calls X | `trace_path(function_name="X", direction="inbound")` |
-| What X calls | `trace_path(function_name="X", direction="outbound")` |
-| Text/pattern in any file | `search_code(pattern="asyncio.to_thread")` |
-| Project structure | `get_architecture(project="...")` |
-
----
-
-## PROGRESS_LOG format
-
-Every non-obvious decision gets a structured entry:
+The protocol captures *reasons*, not just *what was done*. Each decision has:
 
 ```markdown
-### Decision name (YYYY-MM-DD)
-**Decision:** What exactly was done — specific.
-**Reason:** Why. What the problem was, what was tried before.
-**DO NOT CHANGE because:** What breaks if reverted.
+## D-001 — Synchronous generation kept
+
+Status: Active
+Date: 2026-08-01
+Related code: `src/generation/service.ts`
+
+### Decision
+Generation is synchronous — client waits for result.
+
+### Why
+Async caused duplicate orders when users re-submitted. Three prod incidents.
+
+### Do not change because
+Duplicate charges reappear. Happened 2026-07-01, 2026-07-14, 2026-07-31.
 ```
 
-The pinned table at the top surfaces the most critical decisions — the ones where "improving" without context causes production incidents.
+Future sessions read this before touching related code. No more "let me make this async for performance" surprises.
 
----
+## STATE.md — slim by design
 
-## Session end protocol
+Only what cannot be derived from the code:
 
-After any non-trivial session:
+```markdown
+# Current state
 
-1. **PROGRESS_LOG.md** — add entry if: provider/model change, architecture change, non-trivial bug, rejected "obvious" solution
-2. **AGENT_START_HERE.md** — update date, session number, current status
-3. **Graph** — `index_repository` if source files were added or renamed
+Updated: 2026-08-13
+Branch: main
+Active change: CHG-003
+Last verified commit: 2109860
 
----
+## Current
+Auth and generation working in prod. Payment flow in test.
 
-## What made this necessary
+## In progress
+CHG-003: FreedomPay webhook integration
 
-This system was built over dozens of sessions on a real production project. The patterns came from actual failures:
+## Blocked
+Waiting for FreedomPay sandbox credentials.
 
-- Claude using `Read` on a 500-line file to find a 10-line function → fixed by `search_graph` first
-- The same architectural mistake made three sessions in a row → fixed by PROGRESS_LOG pinned table
-- Context lost between sessions, requiring significant re-derivation → fixed by AGENT_START_HERE
-- Library code written from stale training data → fixed by Context7 protocol
+## Next
+Test webhook locally once credentials arrive.
+```
 
----
+Not in STATE.md: API routes, DB schema, env vars, folder structure, dependency versions.
+
+## Navigation — MCP optional
+
+The protocol works without codebase-memory-mcp:
+
+```
+codebase-memory-mcp available  →  graph search (fastest)
+Language server available       →  symbol lookup
+Neither                         →  rg + targeted file reads (always works)
+```
+
+Set `navigation.provider: auto` and the skill picks automatically.
+
+## Hooks
+
+Two lightweight hooks are included:
+
+- **SessionStart** — reads STATE.md and active CHANGEs, injects them as context
+- **PostToolUse(Write/Edit)** — logs modified files to `.protocol/runtime/`
+
+No Stop hook. Sessions end cleanly.
+
+## Migrating from v1
+
+If you used the v1 templates (AGENT_START_HERE.md, PROGRESS_LOG.md):
+
+```
+/continuity:protocol-init
+```
+
+The skill detects them and offers to migrate. See [migration guide](docs/migration-v1-v2.md).
+
+## v1 templates
+
+The original template files are preserved in [`legacy/v1/`](legacy/v1/) for reference.
 
 ## Compatibility
 
-- **Claude Code CLI**: tested with v2.1.119
-- **codebase-memory-mcp**: tested with v0.10.2, supports 158 languages
-- **Context7 (`@upstash/context7-mcp`)**: tested with v4.0.2
-- **Node.js**: 20.18.1+
+- Claude Code CLI: v2.1.x+
+- Node.js: 20+ (for hooks-handlers)
+- Works with Python, Node.js, Rust, Go projects
 
 ---
 
-## Contributing
-
-The protocols are general — the templates are starting points. Adapt to your stack and document what actually broke in your project.
-
-If you add a pattern from a real production incident, it belongs in `PROGRESS_LOG.md` and optionally in the project `CLAUDE.md` as a critical pattern.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+MIT License · [RatmirAltaevich](https://github.com/RatmirAltaevich)

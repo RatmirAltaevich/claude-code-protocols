@@ -1,0 +1,26 @@
+schema: 1
+project: my-project
+
+commands:
+  test: ""
+  lint: ""
+  typecheck: ""
+  build: ""
+
+documentation:
+  instructions: CLAUDE.md
+  state: .protocol/STATE.md
+  decisions: .protocol/DECISIONS.md
+  # existing_adr: docs/adr   # uncomment if you have existing ADR files
+
+navigation:
+  provider: auto   # auto | codebase-memory | rg
+
+risk:
+  require_approval:
+    - database-migration
+    - authentication
+    - payments
+    - public-api
+    - production
+    - destructive-operation

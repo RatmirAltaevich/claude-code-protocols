@@ -1,0 +1,13 @@
+{
+  "name": "continuity",
+  "description": "Adaptive project continuity for Claude Code — STATE.md, DECISIONS.md, CHANGE.md workflow that scales process to task size. No duplicate source of truth.",
+  "version": "2.0.0",
+  "keywords": [
+    "continuity",
+    "memory",
+    "decisions",
+    "workflow",
+    "documentation",
+    "protocol"
+  ]
+}

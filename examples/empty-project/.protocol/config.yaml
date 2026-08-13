@@ -1,0 +1,25 @@
+schema: 1
+project: my-project
+
+commands:
+  test: npm test
+  lint: npm run lint
+  typecheck: npm run typecheck
+  build: npm run build
+
+documentation:
+  instructions: CLAUDE.md
+  state: .protocol/STATE.md
+  decisions: .protocol/DECISIONS.md
+
+navigation:
+  provider: auto
+
+risk:
+  require_approval:
+    - database-migration
+    - authentication
+    - payments
+    - public-api
+    - production
+    - destructive-operation

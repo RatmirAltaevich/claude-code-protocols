@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-code-protocols",
+  "description": "Git-native project continuity for Claude Code — adaptive workflow, decision memory, and change tracking without duplicating what the code already knows.",
+  "owner": {
+    "name": "Ratmir Petrov",
+    "url": "https://github.com/RatmirAltaevich"
+  },
+  "plugins": [
+    {
+      "name": "continuity",
+      "description": "Adaptive project continuity — STATE.md, DECISIONS.md, CHANGE.md, and four skills that scale process to task size. Memory always, specification when needed, no duplicate source of truth.",
+      "source": "./plugin",
+      "category": "productivity",
+      "homepage": "https://github.com/RatmirAltaevich/claude-code-protocols"
+    }
+  ]
+}
