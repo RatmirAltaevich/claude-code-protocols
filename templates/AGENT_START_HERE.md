@@ -21,7 +21,8 @@ Don't waste tokens on grep and sequential file reads. Use:
 ```
 Find function:    mcp__codebase-memory-mcp__search_graph(name_pattern="...", project="my-project")
 Function source:  mcp__codebase-memory-mcp__get_code_snippet(qualified_name="...", project="my-project")
-Call chain:       mcp__codebase-memory-mcp__trace_path(function_name="...", project="my-project")
+Who calls X:      mcp__codebase-memory-mcp__trace_path(function_name="...", project="my-project", direction="inbound")
+What X calls:     mcp__codebase-memory-mcp__trace_path(function_name="...", project="my-project", direction="outbound")
 Text search:      mcp__codebase-memory-mcp__search_code(pattern="...", project="my-project")
 Architecture:     mcp__codebase-memory-mcp__get_architecture(project="my-project")
 ```

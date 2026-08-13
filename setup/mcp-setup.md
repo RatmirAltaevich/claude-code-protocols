@@ -51,7 +51,8 @@ Add your project to `global/CLAUDE.md` → "Indexed projects" table after indexi
 | `search_graph(name_pattern="...")` | Find function/class by name |
 | `search_graph(query="...")` | Find by behavior description |
 | `get_code_snippet(qualified_name="...")` | Read exact source of a symbol |
-| `trace_path(function_name="...")` | Call chain up/down |
+| `trace_path(function_name="...", direction="inbound")` | Who calls a function |
+| `trace_path(function_name="...", direction="outbound")` | What a function calls |
 | `search_code(pattern="...")` | Text pattern search (graph-augmented grep) |
 | `get_architecture(project="...")` | Project structure overview |
 

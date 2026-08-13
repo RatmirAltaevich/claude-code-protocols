@@ -49,10 +49,9 @@ claude-code-protocols/
 
 ```bash
 npm install -g codebase-memory-mcp
-npm install -g @upstash/context7-mcp
 ```
 
-See [setup/mcp-setup.md](setup/mcp-setup.md) for configuration details.
+Context7 runs via `npx` — no global install needed. See [setup/mcp-setup.md](setup/mcp-setup.md) for full configuration.
 
 ### 2. Set up global CLAUDE.md
 
