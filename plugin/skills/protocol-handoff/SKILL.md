@@ -67,7 +67,7 @@ last_decision=$(
     | grep -oE 'D-[0-9]+' \
     | sort -V \
     | tail -1
-)
+) || true
 
 if [ -z "$last_decision" ]; then
   next_decision="D-001"
@@ -156,15 +156,18 @@ Leave incomplete changes in `active/`.
 
 ---
 
-## Step 6 — Clean up session runtime
+## Step 6 — Mark session as handed off
 
-After a successful handoff, remove only the current session's runtime directory:
+Write a marker so `SessionEnd` knows handoff already ran and skips creating a recovery snapshot:
 
 ```bash
-rm -rf ".protocol/runtime/${CLAUDE_SESSION_ID:-unknown}"
+SESSION_DIR=".protocol/runtime/${CLAUDE_SESSION_ID:-unknown}"
+mkdir -p "$SESSION_DIR"
+touch "$SESSION_DIR/handoff-complete"
 ```
 
-Do not delete other session directories — they may belong to parallel sessions or contain unhandled recovery snapshots.
+Do not `rm -rf` the directory here — `SessionEnd` will clean it up cleanly when it fires.
+Do not touch other session directories.
 
 ---
 

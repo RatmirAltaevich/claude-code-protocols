@@ -86,7 +86,7 @@ last_change=$(
     | grep -oE 'CHG-[0-9]+' \
     | sort -V \
     | tail -1
-)
+) || true
 
 if [ -z "$last_change" ]; then
   next_change="CHG-001"
