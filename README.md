@@ -8,8 +8,8 @@ Built from real project experience — not theory.
 
 ## The problem
 
-Claude Code is powerful but stateless. Without structure:
-- Every session starts from scratch — Claude re-derives context you already established
+Claude Code has built-in auto-memory, but it does not replace explicit, repository-shared project documentation. Without structure:
+- New sessions may lack the explicit project state and decision history needed for consistent work
 - Architectural decisions get "improved" by an agent that doesn't know they were already tried and failed
 - Code navigation defaults to reading full files instead of jumping to exact symbols
 - Library code gets written from training data, not current docs

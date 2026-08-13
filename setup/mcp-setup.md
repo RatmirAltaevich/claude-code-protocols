@@ -17,7 +17,7 @@ npm install -g codebase-memory-mcp
 ### Configure in Claude Code
 
 ```bash
-claude mcp add --transport stdio codebase-memory-mcp -- codebase-memory-mcp
+claude mcp add --transport stdio codebase-memory-mcp --scope user -- codebase-memory-mcp
 ```
 
 Or manually in `~/.claude.json`:
@@ -65,7 +65,7 @@ Fetches current library documentation from the Context7 index. Sources may be of
 ### Configure
 
 ```bash
-claude mcp add --transport stdio context7 -- npx -y @upstash/context7-mcp@latest
+claude mcp add --transport stdio context7 --scope user -- npx -y @upstash/context7-mcp@latest
 ```
 
 Or manually in `~/.claude.json`:
@@ -92,17 +92,18 @@ Use before writing code with any library that has frequent breaking changes betw
 
 ---
 
-## 3. Auto-memory (optional but recommended)
+## 3. Auto-memory
 
-Claude Code has a built-in file-based memory system at `~/.claude/projects/<project-id>/memory/`. See [Claude Code memory docs](https://docs.anthropic.com/en/docs/claude-code/memory) for details.
+Claude Code auto-memory is enabled by default. It automatically creates and maintains:
 
-The global `CLAUDE.md` in this repo uses this system. To enable:
+`~/.claude/projects/<project-id>/memory/MEMORY.md`
 
-1. Claude Code creates the memory directory automatically
-2. Add a `MEMORY.md` index file with entries pointing to memory files
-3. Claude will read and update memory files during sessions
+No manual setup is required.
 
-No installation needed — it's built into Claude Code.
+Use `/memory` inside Claude Code to inspect, enable, or disable it.
+
+Auto-memory is machine-local and is not shared through the repository.
+See the [Claude Code memory documentation](https://docs.anthropic.com/en/docs/claude-code/memory).
 
 ---
 
