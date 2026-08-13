@@ -41,16 +41,23 @@ if [ -d "$PROTOCOL_DIR/runtime" ]; then
     session_id=$(basename "$session_dir")
     [ "$session_id" = "$current_session" ] && continue
     if [ -f "$session_dir/recovery.json" ]; then
-      modified=$(python3 -c "
-import json, sys
+      modified=$(
+        CONTINUITY_RECOVERY_FILE="$session_dir/recovery.json" python3 <<'PY'
+import json, os
 try:
-    d = json.load(open('$session_dir/recovery.json'))
-    files = d.get('modifiedFiles', [])
-    changes = d.get('activeChanges', [])
-    print(f'session: {d.get(\"sessionId\", \"?\")}, modified files: {len(files)}, active changes: {\", \".join(changes) or \"none\"}')
-except Exception:
-    print('recovery.json found but unreadable')
-" 2>/dev/null)
+    with open(os.environ["CONTINUITY_RECOVERY_FILE"], encoding="utf-8") as f:
+        d = json.load(f)
+    files   = d.get("modifiedFiles", [])
+    changes = d.get("activeChanges", [])
+    print(
+        f'session: {d.get("sessionId", "?")}, '
+        f'modified files: {len(files)}, '
+        f'active changes: {", ".join(changes) or "none"}'
+    )
+except Exception as e:
+    print(f"recovery.json unreadable: {e}")
+PY
+      )
       recovery_notice="${recovery_notice}
 ⚠ Recovery snapshot found: ${modified}
   Review .protocol/runtime/${session_id}/recovery.json before starting unrelated work."

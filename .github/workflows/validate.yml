@@ -29,5 +29,8 @@ jobs:
           git config --global user.email "ci@example.invalid"
           bash tests/run-all.sh
 
-      - name: Validate Claude Code plugin
+      - name: Validate Claude Code plugin (marketplace root)
+        run: npx -y @anthropic-ai/claude-code@2.1.231 plugin validate . --strict
+
+      - name: Validate Claude Code plugin (plugin/)
         run: npx -y @anthropic-ai/claude-code@2.1.231 plugin validate plugin --strict

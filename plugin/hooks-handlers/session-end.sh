@@ -14,11 +14,17 @@ fi
 
 input=$(cat)
 
+# Validate session_id to prevent path traversal via crafted hook payloads.
 session_id=$(python3 -c "
-import sys, json
+import sys, json, hashlib, re
 try:
     d = json.loads(sys.stdin.read())
-    print(d.get('session_id', 'unknown'), end='')
+    raw = str(d.get('session_id', 'unknown'))
+    if re.fullmatch(r'[A-Za-z0-9._-]{1,128}', raw):
+        print(raw, end='')
+    else:
+        digest = hashlib.sha256(raw.encode()).hexdigest()[:16]
+        print(f'invalid-{digest}', end='')
 except Exception:
     print('unknown', end='')
 " <<< "$input" 2>/dev/null)

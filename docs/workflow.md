@@ -31,12 +31,12 @@ Archive change + update decisions
 
 | Type | Conditions | Process |
 |------|-----------|---------|
-| Small | 1–2 files, no behavior change, no risk keywords | No CHANGE.md. Execute. |
+| Small | 1–2 files, no behavior change, no semantic risk categories | No CHANGE.md. Execute. |
 | Standard | Multiple files or new behavior | CHANGE.md, then proceed |
-| High-risk | Risk keyword from config.yaml | CHANGE.md + stop for approval |
+| High-risk | Semantic risk category from config.yaml | CHANGE.md + stop for approval |
 | Epic | New subsystem (>5 files, >1 week) | Extended CHANGE.md + approval |
 
-Default risk keywords: `database-migration`, `authentication`, `payments`, `public-api`, `production`, `destructive-operation`
+Default semantic risk categories: `authentication`, `authorization`, `payments`, `data_migration`, `public_api`, `production`, `destructive_operations`, `secrets_and_credentials`
 
 ## CHANGE.md lifecycle
 

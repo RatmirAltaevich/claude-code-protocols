@@ -58,6 +58,11 @@ echo "Crash recovery"
 run_test "Aborted session visible in next SessionStart" "test-crash-recovery.sh"
 
 echo ""
+echo "Security"
+run_test "Apostrophe in project path (session-start)"  "test-apostrophe-path-session-start.sh"
+run_test "Path traversal in session_id blocked"        "test-session-id-traversal.sh"
+
+echo ""
 echo "Runtime isolation"
 run_test "Two sessions don't share tracked-files"     "test-runtime-isolation.sh"
 
