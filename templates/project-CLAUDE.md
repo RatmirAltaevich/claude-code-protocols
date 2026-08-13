@@ -12,19 +12,18 @@ Read ALL files before writing code or making architectural decisions:
 | # | File | What's there |
 |---|------|------|
 | 1 | `CLAUDE.md` | **This file** — rules, restrictions, deploy order |
-| 2 | `PROGRESS_LOG.md` | Decision history and reasons. **Read fully.** Explains why the code is the way it is. Many things look "obviously improvable" until you read the reason. |
+| 2 | `PROGRESS_LOG.md` | Read PINNED decisions first; load relevant entries before changing architecture or behavior connected to those decisions. |
 | 3 | `AGENT_START_HERE.md` | Infrastructure, APIs, env vars, current status |
 | 4 | `SCALING.md` | Current scaling plan — what stage, what's next *(remove if not applicable)* |
 | 5 | `RUNBOOK.md` | What to do when something breaks. Read only during an incident. |
 
-**Rule:** if you haven't read PROGRESS_LOG before changing an architectural decision — don't touch the code. Many decisions have already been tried and reverted — the reasons are there.
+**Rule:** read the PINNED section for every task. Read relevant full entries before changing architecture or behavior connected to those decisions.
 
 ---
 
 ## 2. Decision log (PROGRESS_LOG.md)
 
 > Format and triggers → global `~/.claude/CLAUDE.md` §4.
-> For this project: read PROGRESS_LOG for **every task**, not only architectural ones.
 
 ---
 

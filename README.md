@@ -45,13 +45,16 @@ claude-code-protocols/
 
 ## Quickstart
 
-### 1. Install MCP servers
+### 1. Install and register MCP servers
 
 ```bash
 npm install -g codebase-memory-mcp
+
+claude mcp add --transport stdio codebase-memory-mcp --scope user -- codebase-memory-mcp
+claude mcp add --transport stdio context7 --scope user -- npx -y @upstash/context7-mcp@latest
 ```
 
-Context7 runs via `npx` — no global install needed. See [setup/mcp-setup.md](setup/mcp-setup.md) for full configuration.
+See [setup/mcp-setup.md](setup/mcp-setup.md) for manual configuration and verification.
 
 ### 2. Set up global CLAUDE.md
 
@@ -168,7 +171,7 @@ This system was built over dozens of sessions on a real production project. The 
 
 ## Compatibility
 
-- **Claude Code CLI**: check your version with `claude --version`
+- **Claude Code CLI**: tested with v2.1.119
 - **codebase-memory-mcp**: tested with v0.10.2, supports 158 languages
 - **Context7 (`@upstash/context7-mcp`)**: tested with v4.0.2
 - **Node.js**: 20.18.1+
