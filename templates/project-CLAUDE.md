@@ -5,9 +5,9 @@
 
 ---
 
-## 1. Required reading order at session start
+## 1. Required reading at session start
 
-Read ALL files before writing code or making architectural decisions:
+Read the files according to the conditions below before writing code or making architectural decisions:
 
 | # | File | What's there |
 |---|------|------|

@@ -35,7 +35,7 @@ After major changes: `index_repository(repo_path="<path>", name="my-project")`.
 ## Where to start (required order)
 
 1. **`CLAUDE.md`** — restrictions, rules, deploy order
-2. **`PROGRESS_LOG.md`** — decision history and reasons. **Read fully.** The "why" behind every non-obvious architectural choice is there.
+2. **`PROGRESS_LOG.md`** — read the PINNED section first. Load relevant full entries before changing architecture or behavior connected to those decisions.
 3. **`AGENT_START_HERE.md`** (this file) — infrastructure, APIs, current status
 
 **Rule:** if you want to change something architectural (provider, model, API endpoint, handler flow) — first search PROGRESS_LOG for whether this has been tried before and why it was abandoned.
