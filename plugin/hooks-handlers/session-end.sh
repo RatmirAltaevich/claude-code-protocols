@@ -18,10 +18,10 @@ session_id=$(python3 -c "
 import sys, json
 try:
     d = json.loads(sys.stdin.read())
-    print(d.get('session_id', 'unknown'))
+    print(d.get('session_id', 'unknown'), end='')
 except Exception:
-    print('unknown')
-" <<< "$input")
+    print('unknown', end='')
+" <<< "$input" 2>/dev/null)
 session_id="${session_id:-unknown}"
 
 SESSION_DIR="$PROTOCOL_DIR/runtime/$session_id"
@@ -41,19 +41,37 @@ else
   dirty=false
 fi
 
+# Skip recovery for sessions with no tracked work.
+tracked_file="$SESSION_DIR/tracked-files.txt"
+if [ "$dirty" = false ] && [ ! -s "$tracked_file" ]; then
+  rm -rf "$SESSION_DIR"
+  exit 0
+fi
+
 branch=$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 commit=$(git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-ended_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Modified files: git status (staged + unstaged + untracked) + runtime tracked files
-python3 - <<PYEOF
-import json, subprocess, os
+# Pass all values via env to avoid injection through paths or branch names with
+# special characters (spaces, quotes, etc.).
+CONTINUITY_PROJECT_DIR="$PROJECT_DIR" \
+CONTINUITY_SESSION_DIR="$SESSION_DIR" \
+CONTINUITY_SESSION_ID="$session_id" \
+CONTINUITY_BRANCH="$branch" \
+CONTINUITY_COMMIT="$commit" \
+CONTINUITY_DIRTY="$dirty" \
+python3 <<'PY'
+import json, os, subprocess
+from datetime import datetime, timezone
 
-session_dir = "$SESSION_DIR"
-project_dir = "$PROJECT_DIR"
+project_dir = os.environ["CONTINUITY_PROJECT_DIR"]
+session_dir = os.environ["CONTINUITY_SESSION_DIR"]
+session_id  = os.environ["CONTINUITY_SESSION_ID"]
+branch      = os.environ["CONTINUITY_BRANCH"]
+commit      = os.environ["CONTINUITY_COMMIT"]
+dirty       = json.loads(os.environ["CONTINUITY_DIRTY"])
+
 tracked_path = os.path.join(session_dir, "tracked-files.txt")
 
-# Files from git status --porcelain
 try:
     result = subprocess.run(
         ["git", "-C", project_dir, "status", "--porcelain"],
@@ -63,7 +81,6 @@ try:
 except Exception:
     git_files = []
 
-# Files from runtime tracker
 runtime_files = []
 if os.path.exists(tracked_path):
     with open(tracked_path) as f:
@@ -71,25 +88,26 @@ if os.path.exists(tracked_path):
 
 all_modified = sorted(set(git_files + runtime_files))
 
-# Active changes
 changes_dir = os.path.join(project_dir, ".protocol", "changes", "active")
 active_changes = []
 if os.path.isdir(changes_dir):
     active_changes = sorted(
-        f[:-3] for f in os.listdir(changes_dir)
-        if f.startswith("CHG-") and f.endswith(".md")
+        fn[:-3] for fn in os.listdir(changes_dir)
+        if fn.startswith("CHG-") and fn.endswith(".md")
     )
 
+ended_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
 snapshot = {
-    "sessionId": "$session_id",
-    "endedAt": "$ended_at",
-    "branch": "$branch",
-    "commit": "$commit",
-    "dirty": json.loads("$dirty"),
+    "sessionId":     session_id,
+    "endedAt":       ended_at,
+    "branch":        branch,
+    "commit":        commit,
+    "dirty":         dirty,
     "modifiedFiles": all_modified,
     "activeChanges": active_changes,
 }
 
 with open(os.path.join(session_dir, "recovery.json"), "w") as f:
     json.dump(snapshot, f, indent=2)
-PYEOF
+PY

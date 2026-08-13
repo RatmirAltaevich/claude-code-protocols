@@ -8,9 +8,13 @@ trap 'rm -rf "$TMPDIR"' EXIT
 
 mkdir -p "$TMPDIR/.protocol/changes/active"
 
-# Create a minimal git repo so git commands don't fail
 git -C "$TMPDIR" init -q
+git -C "$TMPDIR" config user.name "Continuity CI"
+git -C "$TMPDIR" config user.email "ci@example.invalid"
 git -C "$TMPDIR" commit --allow-empty -m "init" -q
+
+# Make worktree dirty so session-end.sh creates recovery.json
+echo "test content" > "$TMPDIR/test.py"
 
 HOOK_JSON='{"session_id":"test-session"}'
 

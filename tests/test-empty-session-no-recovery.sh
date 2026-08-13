@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# After handoff writes handoff-complete, SessionEnd must NOT create recovery.json.
+# An empty session (clean git, no tracked files) must NOT produce recovery.json.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -7,20 +7,15 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 mkdir -p "$TMPDIR/.protocol/changes/active"
-
 git -C "$TMPDIR" init -q
 git -C "$TMPDIR" config user.name "Continuity CI"
 git -C "$TMPDIR" config user.email "ci@example.invalid"
 git -C "$TMPDIR" commit --allow-empty -m "init" -q
 
-SESSION_DIR="$TMPDIR/.protocol/runtime/test-session"
-mkdir -p "$SESSION_DIR"
-touch "$SESSION_DIR/handoff-complete"
-
-HOOK_JSON='{"session_id":"test-session"}'
-
+# No tracked files, clean worktree.
+HOOK_JSON='{"session_id":"empty-session"}'
 printf '%s' "$HOOK_JSON" \
   | CLAUDE_PROJECT_DIR="$TMPDIR" bash "$REPO/plugin/hooks-handlers/session-end.sh"
 
-# Session dir should be cleaned up, recovery.json must NOT exist
-[ ! -f "$SESSION_DIR/recovery.json" ] || { echo "recovery.json was created despite handoff-complete"; exit 1; }
+RECOVERY="$TMPDIR/.protocol/runtime/empty-session/recovery.json"
+[ ! -f "$RECOVERY" ] || { echo "recovery.json was created for an empty session"; exit 1; }

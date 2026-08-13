@@ -50,6 +50,12 @@ echo "Real hook execution"
 run_test "track-change.sh with space in file path"    "test-track-change.sh"
 run_test "session-end.sh creates valid recovery.json" "test-session-end.sh"
 run_test "SessionEnd skips recovery after handoff"    "test-handoff-marker.sh"
+run_test "Empty session: no recovery.json created"    "test-empty-session-no-recovery.sh"
+run_test "Special path (space+quote) in project dir"  "test-special-path-session-end.sh"
+
+echo ""
+echo "Crash recovery"
+run_test "Aborted session visible in next SessionStart" "test-crash-recovery.sh"
 
 echo ""
 echo "Runtime isolation"

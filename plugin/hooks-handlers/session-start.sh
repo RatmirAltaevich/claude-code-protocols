@@ -47,13 +47,18 @@ try:
     d = json.load(open('$session_dir/recovery.json'))
     files = d.get('modifiedFiles', [])
     changes = d.get('activeChanges', [])
-    print(f'session: {d.get(\"sessionId\", \"?\")}, modified files: {len(files)}, active change: {\", \".join(changes) or \"none\"}')
+    print(f'session: {d.get(\"sessionId\", \"?\")}, modified files: {len(files)}, active changes: {\", \".join(changes) or \"none\"}')
 except Exception:
     print('recovery.json found but unreadable')
 " 2>/dev/null)
       recovery_notice="${recovery_notice}
 ⚠ Recovery snapshot found: ${modified}
   Review .protocol/runtime/${session_id}/recovery.json before starting unrelated work."
+    elif [ -s "$session_dir/tracked-files.txt" ]; then
+      file_count=$(wc -l < "$session_dir/tracked-files.txt" 2>/dev/null | tr -d ' ')
+      recovery_notice="${recovery_notice}
+⚠ Aborted session: ${session_id} — ${file_count} tracked file(s), SessionEnd did not run.
+  Review .protocol/runtime/${session_id}/tracked-files.txt before continuing."
     fi
   done
 fi

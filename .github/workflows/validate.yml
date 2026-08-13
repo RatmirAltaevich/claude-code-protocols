@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Validate JSON
         run: |
@@ -24,8 +24,10 @@ jobs:
           done
 
       - name: Run tests
-        run: bash tests/run-all.sh
+        run: |
+          git config --global user.name "Continuity CI"
+          git config --global user.email "ci@example.invalid"
+          bash tests/run-all.sh
 
-      # `claude plugin validate . --strict` requires Claude Code CLI which is not
-      # available in standard CI. Run it locally before publishing a release:
-      #   claude plugin validate plugin/ --strict
+      - name: Validate Claude Code plugin
+        run: npx -y @anthropic-ai/claude-code@2.1.231 plugin validate plugin --strict

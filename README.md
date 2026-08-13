@@ -152,7 +152,7 @@ The original template files are preserved in [`legacy/v1/`](legacy/v1/) for refe
 
 ## Compatibility
 
-- Claude Code 2.1.119+
+- Claude Code 2.1.216+
 - macOS or Linux
 - Bash
 - Python 3 (used by hooks for JSON parsing)
