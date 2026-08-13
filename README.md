@@ -8,7 +8,13 @@ A Claude Code plugin that gives any project persistent memory and an adaptive wo
 
 ```
 /plugin marketplace add RatmirAltaevich/claude-code-protocols
-/plugin install continuity
+/plugin install continuity@claude-code-protocols
+```
+
+If Claude Code prompts you to reload after installation:
+
+```
+/reload-plugins
 ```
 
 Then in your project:

@@ -6,6 +6,22 @@ Use at the end of a session or after a significant task is complete.
 
 ---
 
+## Step 0 — Load session runtime
+
+Determine `CLAUDE_SESSION_ID` from the environment (or use `unknown` as fallback).
+
+```bash
+SESSION_DIR=".protocol/runtime/${CLAUDE_SESSION_ID:-unknown}"
+```
+
+If `$SESSION_DIR/tracked-files.txt` exists, read it. Compare against `git status --short` to confirm which files were actually modified this session. Show the user a combined list.
+
+If other session directories exist in `.protocol/runtime/` besides the current one, check for `recovery.json` in each:
+- If found: surface a warning — a previous session ended without handoff
+- Do not auto-clean other sessions
+
+---
+
 ## Step 1 — Check git state
 
 ```bash
@@ -37,6 +53,24 @@ Review what was done this session. Add a DECISIONS.md entry for each non-obvious
 
 **Do not document**: obvious choices, style preferences, things clear from the code, routine task steps.
 
+Determine the next D-NNN number before appending:
+
+```bash
+last_decision=$(
+  grep -oE '^## D-[0-9]+' .protocol/DECISIONS.md 2>/dev/null \
+    | grep -oE 'D-[0-9]+' \
+    | sort -V \
+    | tail -1
+)
+
+if [ -z "$last_decision" ]; then
+  next_decision="D-001"
+else
+  number=${last_decision#D-}
+  next_decision=$(printf 'D-%03d' "$((10#$number + 1))")
+fi
+```
+
 Append to `.protocol/DECISIONS.md`:
 
 ```markdown
@@ -58,8 +92,6 @@ Related code: `<file or function>`
 
 <what breaks if reversed>
 ```
-
-Use the next sequential D-NNN number.
 
 ---
 
@@ -115,7 +147,19 @@ Leave incomplete changes in `active/`.
 
 ---
 
-## Step 6 — Confirm
+## Step 6 — Clean up session runtime
+
+After a successful handoff, remove only the current session's runtime directory:
+
+```bash
+rm -rf ".protocol/runtime/${CLAUDE_SESSION_ID:-unknown}"
+```
+
+Do not delete other session directories — they may belong to parallel sessions or contain unhandled recovery snapshots.
+
+---
+
+## Step 7 — Confirm
 
 ```
 SESSION HANDOFF — <date>
@@ -124,6 +168,7 @@ Verification: test ✓ | lint ✓ | typecheck ✓ | build ✓
 Decisions captured: D-<NNN> (<title>)
 Changes archived: CHG-<NNN> → archive/<year>/
 STATE.md updated.
+Session runtime cleaned.
 
 Next: <what was set in STATE.md → Next>
 ```

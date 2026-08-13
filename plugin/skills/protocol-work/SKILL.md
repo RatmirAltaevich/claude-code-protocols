@@ -52,8 +52,22 @@ After completion: if a non-obvious architectural choice was made, note it briefl
 Determine the next change number:
 
 ```bash
-ls .protocol/changes/active/ .protocol/changes/archive/ 2>/dev/null | grep -oE 'CHG-[0-9]+' | sort -V | tail -1
+last_change=$(
+  find .protocol/changes -type f -name 'CHG-[0-9][0-9][0-9].md' 2>/dev/null \
+    | grep -oE 'CHG-[0-9]+' \
+    | sort -V \
+    | tail -1
+)
+
+if [ -z "$last_change" ]; then
+  next_change="CHG-001"
+else
+  number=${last_change#CHG-}
+  next_change=$(printf 'CHG-%03d' "$((10#$number + 1))")
+fi
 ```
+
+This searches both `active/` and `archive/` recursively, so CHG numbers never reset after archiving.
 
 Create `.protocol/changes/active/CHG-NNN.md`:
 

@@ -1,5 +1,5 @@
 {
-  "description": "Continuity Protocol hooks — session awareness and change tracking",
+  "description": "Continuity Protocol hooks — session awareness, change tracking, and crash recovery",
   "hooks": {
     "SessionStart": [
       {
@@ -20,6 +20,17 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/track-change.sh\"",
             "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-end.sh\"",
+            "timeout": 5
           }
         ]
       }

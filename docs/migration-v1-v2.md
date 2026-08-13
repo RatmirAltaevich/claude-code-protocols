@@ -19,7 +19,12 @@ v1 was a set of templates you copied manually. v2 is an installable plugin with 
 1. Install the plugin:
    ```
    /plugin marketplace add RatmirAltaevich/claude-code-protocols
-   /plugin install continuity
+   /plugin install continuity@claude-code-protocols
+   ```
+
+   If Claude Code prompts you to reload:
+   ```
+   /reload-plugins
    ```
 
 2. Run init — it detects existing v1 files and offers to migrate:
