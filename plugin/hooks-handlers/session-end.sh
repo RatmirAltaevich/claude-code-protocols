@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# SessionEnd hook — writes a recovery snapshot for crash recovery.
-# Does NOT modify STATE.md, run tests, or archive changes.
+# SessionEnd hook — writes a recovery snapshot and auto-updates mechanical
+# STATE.md fields (Updated, Branch, Active change). Narrative sections
+# (## Current, ## Blocked, ## Next) are never touched.
 # Exits silently if .protocol/ does not exist.
 
 set -euo pipefail
@@ -32,7 +33,7 @@ session_id="${session_id:-unknown}"
 
 SESSION_DIR="$PROTOCOL_DIR/runtime/$session_id"
 
-# If handoff already ran for this session, clean up and skip recovery.
+# If handoff already ran for this session, clean up and skip.
 if [ -f "$SESSION_DIR/handoff-complete" ]; then
   rm -rf "$SESSION_DIR"
   exit 0
@@ -47,7 +48,7 @@ else
   dirty=false
 fi
 
-# Skip recovery for sessions with no tracked work.
+# Skip for sessions with no tracked work.
 tracked_file="$SESSION_DIR/tracked-files.txt"
 if [ "$dirty" = false ] && [ ! -s "$tracked_file" ]; then
   rm -rf "$SESSION_DIR"
@@ -66,8 +67,9 @@ CONTINUITY_BRANCH="$branch" \
 CONTINUITY_COMMIT="$commit" \
 CONTINUITY_DIRTY="$dirty" \
 python3 <<'PY'
-import json, os, subprocess
+import json, os, re, subprocess
 from datetime import datetime, timezone
+from pathlib import Path
 
 project_dir = os.environ["CONTINUITY_PROJECT_DIR"]
 session_dir = os.environ["CONTINUITY_SESSION_DIR"]
@@ -116,4 +118,19 @@ snapshot = {
 
 with open(os.path.join(session_dir, "recovery.json"), "w") as f:
     json.dump(snapshot, f, indent=2)
+
+# --- Auto-update mechanical STATE.md fields ---
+# Only Updated, Branch, Active change are rewritten — purely from git/fs data.
+# Narrative sections (## Current, ## Blocked, ## Next) are left untouched.
+# The ⚠auto marker on Updated: signals the narrative may be stale.
+# A full /continuity:protocol-handoff overwrites STATE.md and removes it.
+state_path = Path(project_dir) / ".protocol" / "STATE.md"
+if state_path.exists():
+    today      = ended_at[:10]
+    active_str = ", ".join(active_changes) if active_changes else "none"
+    text = state_path.read_text(encoding="utf-8")
+    text = re.sub(r"^Updated:.*$",       f"Updated: {today} ⚠auto",  text, flags=re.MULTILINE)
+    text = re.sub(r"^Branch:.*$",        f"Branch: {branch}",             text, flags=re.MULTILINE)
+    text = re.sub(r"^Active change:.*$", f"Active change: {active_str}",  text, flags=re.MULTILINE)
+    state_path.write_text(text, encoding="utf-8")
 PY
