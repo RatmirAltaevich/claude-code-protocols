@@ -77,7 +77,7 @@ Fill in the placeholders. The more accurate these are, the better Claude perform
 In a Claude Code session:
 
 ```
-index_repository(project="my-project", root_path="/path/to/my-project")
+index_repository(repo_path="/path/to/my-project", name="my-project")
 ```
 
 Update the "Indexed projects" table in `~/.claude/CLAUDE.md`.
@@ -124,8 +124,8 @@ Decision table embedded in the global CLAUDE.md:
 | Find function by name | `search_graph(name_pattern="my_function")` |
 | Find by behavior | `search_graph(query="upload handler that resizes images")` |
 | Read function source | `get_code_snippet(qualified_name="project.module.function")` |
-| Who calls X | `trace_path(function_name="X", mode="calls")` |
-| What X calls | `trace_path(function_name="X")` |
+| Who calls X | `trace_path(function_name="X", direction="inbound")` |
+| What X calls | `trace_path(function_name="X", direction="outbound")` |
 | Text/pattern in any file | `search_code(pattern="asyncio.to_thread")` |
 | Project structure | `get_architecture(project="...")` |
 
@@ -169,9 +169,10 @@ This system was built over dozens of sessions on a real production project. The 
 
 ## Compatibility
 
-- **Claude Code**: tested with Claude Sonnet 4.x and above
-- **codebase-memory-mcp**: v0.10+, supports 158 languages
-- **Context7 (`@upstash/context7-mcp`)**: v4.0+
+- **Claude Code CLI**: check your version with `claude --version`
+- **codebase-memory-mcp**: tested with v0.10.2, supports 158 languages
+- **Context7 (`@upstash/context7-mcp`)**: tested with v4.0.2
+- **Node.js**: 20.18.1+
 
 ---
 

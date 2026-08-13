@@ -16,13 +16,11 @@ npm install -g codebase-memory-mcp
 
 ### Configure in Claude Code
 
-The recommended way is via the Claude Code CLI:
-
 ```bash
-claude mcp add codebase-memory-mcp
+claude mcp add --transport stdio codebase-memory-mcp -- codebase-memory-mcp
 ```
 
-Alternatively, add manually to `~/.claude.json` under `mcpServers`:
+Or manually in `~/.claude.json`:
 
 ```json
 {
@@ -41,7 +39,7 @@ Alternatively, add manually to `~/.claude.json` under `mcpServers`:
 Run once at the start, then re-run after major refactors:
 
 ```
-index_repository(project="my-project", root_path="/absolute/path/to/project")
+index_repository(repo_path="/absolute/path/to/project", name="my-project")
 ```
 
 Add your project to `global/CLAUDE.md` → "Indexed projects" table after indexing.
@@ -61,18 +59,12 @@ Add your project to `global/CLAUDE.md` → "Indexed projects" table after indexi
 
 ## 2. Context7
 
-Fetches current library documentation indexed from official sources.
-
-### Install
-
-```bash
-npm install -g @upstash/context7-mcp
-```
+Fetches current library documentation from the Context7 index. Sources may be official or community-maintained, so critical information should be verified.
 
 ### Configure
 
 ```bash
-claude mcp add context7 -- npx @upstash/context7-mcp
+claude mcp add --transport stdio context7 -- npx -y @upstash/context7-mcp@latest
 ```
 
 Or manually in `~/.claude.json`:
@@ -82,7 +74,7 @@ Or manually in `~/.claude.json`:
   "mcpServers": {
     "context7": {
       "command": "npx",
-      "args": ["@upstash/context7-mcp"]
+      "args": ["-y", "@upstash/context7-mcp@latest"]
     }
   }
 }
@@ -91,8 +83,8 @@ Or manually in `~/.claude.json`:
 ### Usage
 
 ```
-resolve-library-id(libraryName="aiogram")
-get-library-docs(context7CompatibleLibraryID="/aiogram/aiogram", topic="FSM states")
+resolve-library-id(libraryName="aiogram", query="FSM states in aiogram")
+query-docs(libraryId="/aiogram/aiogram", query="FSM states")
 ```
 
 Use before writing code with any library that has frequent breaking changes between major versions.
@@ -115,12 +107,20 @@ No installation needed — it's built into Claude Code.
 
 ## Verification
 
-After setup, confirm everything works in a Claude Code session:
+After setup, confirm servers appear as connected:
+
+```bash
+claude mcp list
+```
+
+Both `codebase-memory-mcp` and `context7` should show status `connected`.
+
+Then confirm functionality in a Claude Code session:
 
 ```
 # Should return your indexed project's nodes
 search_graph(name_pattern=".*", project="my-project", limit=5)
 
 # Should return a library ID
-resolve-library-id(libraryName="requests")
+resolve-library-id(libraryName="requests", query="http get request")
 ```

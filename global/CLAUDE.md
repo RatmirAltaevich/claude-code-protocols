@@ -29,8 +29,8 @@ It applies to **every project** you open in Claude Code.
 | Find function by name | `search_graph(name_pattern="my_function")` |
 | Find by behavior description | `search_graph(query="photo upload handler")` |
 | Read function source | `get_code_snippet(qualified_name="project.module.function")` |
-| Who calls function X | `trace_path(function_name="X", mode="calls")` |
-| What function X calls | `trace_path(function_name="X")` |
+| Who calls function X | `trace_path(function_name="X", direction="inbound")` |
+| What function X calls | `trace_path(function_name="X", direction="outbound")` |
 | Find text pattern | `search_code(pattern="asyncio.to_thread")` |
 | Project architecture | `get_architecture(project="...", aspects=["overview"])` |
 
@@ -49,7 +49,7 @@ Add your projects here after running `index_repository`:
 |---|---|
 | `my-project` | `/path/to/my-project` |
 
-Re-index: `index_repository(project="...", root_path="...")` — after adding, renaming, or refactoring files.
+Re-index: `index_repository(repo_path="...", name="...")` — after adding, renaming, or refactoring files.
 
 ---
 
@@ -58,8 +58,8 @@ Re-index: `index_repository(project="...", root_path="...")` — after adding, r
 Before writing code with any external library — strictly in this order:
 
 ```
-1. resolve-library-id(libraryName="...")
-2. get-library-docs(context7CompatibleLibraryID="...", topic="specific topic")
+1. resolve-library-id(libraryName="...", query="specific topic")
+2. query-docs(libraryId="<id from step 1>", query="specific topic")
 3. Write code
 ```
 

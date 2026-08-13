@@ -27,7 +27,7 @@ Architecture:     mcp__codebase-memory-mcp__get_architecture(project="my-project
 ```
 
 Project indexed: `"my-project"` (N nodes).
-After major changes: `index_repository(project="my-project", root_path="<path>")`.
+After major changes: `index_repository(repo_path="<path>", name="my-project")`.
 
 ---
 
