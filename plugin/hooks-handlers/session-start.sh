@@ -35,7 +35,22 @@ fi
 # --- Recovery snapshots from other sessions ---
 recovery_notice=""
 if [ -d "$PROTOCOL_DIR/runtime" ]; then
-  current_session="${CLAUDE_SESSION_ID:-}"
+  # Normalize so the comparison matches hook-created directory names (same
+  # algorithm as track-change.sh / session-end.sh).
+  current_session=""
+  if [ -n "${CLAUDE_SESSION_ID:-}" ]; then
+    current_session=$(
+      RAW_SESSION_ID="${CLAUDE_SESSION_ID}" python3 <<'PY'
+import hashlib, os, re
+raw = os.environ["RAW_SESSION_ID"]
+if re.fullmatch(r"[A-Za-z0-9._-]{1,128}", raw):
+    print(raw, end="")
+else:
+    digest = hashlib.sha256(raw.encode()).hexdigest()[:16]
+    print(f"invalid-{digest}", end="")
+PY
+    )
+  fi
   for session_dir in "$PROTOCOL_DIR/runtime"/*/; do
     [ -d "$session_dir" ] || continue
     session_id=$(basename "$session_dir")

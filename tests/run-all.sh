@@ -61,6 +61,7 @@ echo ""
 echo "Security"
 run_test "Apostrophe in project path (session-start)"  "test-apostrophe-path-session-start.sh"
 run_test "Path traversal in session_id blocked"        "test-session-id-traversal.sh"
+run_test "Non-standard CLAUDE_SESSION_ID no false warn" "test-session-id-normalization-start.sh"
 
 echo ""
 echo "Runtime isolation"

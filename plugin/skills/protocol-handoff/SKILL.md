@@ -17,7 +17,21 @@ Use at the end of a session or after a significant task is complete.
 Determine `CLAUDE_SESSION_ID` from the environment (or use `unknown` as fallback).
 
 ```bash
-SESSION_DIR=".protocol/runtime/${CLAUDE_SESSION_ID:-unknown}"
+raw_session_id="${CLAUDE_SESSION_ID:-unknown}"
+
+session_id=$(
+  RAW_SESSION_ID="$raw_session_id" python3 <<'PY'
+import hashlib, os, re
+raw = os.environ["RAW_SESSION_ID"]
+if re.fullmatch(r"[A-Za-z0-9._-]{1,128}", raw):
+    print(raw, end="")
+else:
+    digest = hashlib.sha256(raw.encode()).hexdigest()[:16]
+    print(f"invalid-{digest}", end="")
+PY
+)
+
+SESSION_DIR=".protocol/runtime/$session_id"
 ```
 
 If `$SESSION_DIR/tracked-files.txt` exists, read it. Compare against `git status --short` to confirm which files were actually modified this session. Show the user a combined list.
@@ -161,7 +175,7 @@ Leave incomplete changes in `active/`.
 Write a marker so `SessionEnd` knows handoff already ran and skips creating a recovery snapshot:
 
 ```bash
-SESSION_DIR=".protocol/runtime/${CLAUDE_SESSION_ID:-unknown}"
+# $session_id and $SESSION_DIR are set in Step 0 — reuse them.
 mkdir -p "$SESSION_DIR"
 touch "$SESSION_DIR/handoff-complete"
 ```
