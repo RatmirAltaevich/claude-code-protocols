@@ -1,0 +1,27 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON
+        run: |
+          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+          python3 -m json.tool plugin/.claude-plugin/plugin.json > /dev/null
+          python3 -m json.tool plugin/hooks/hooks.json > /dev/null
+
+      - name: Check shell syntax
+        run: |
+          for f in plugin/hooks-handlers/*.sh; do
+            bash -n "$f"
+          done
+
+      - name: Run tests
+        run: bash tests/run-all.sh

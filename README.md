@@ -128,12 +128,13 @@ Set `navigation.provider: auto` and the skill picks automatically.
 
 ## Hooks
 
-Two lightweight hooks are included:
+Three lightweight hooks are included:
 
-- **SessionStart** — reads STATE.md and active CHANGEs, injects them as context
-- **PostToolUse(Write/Edit)** — logs modified files to `.protocol/runtime/`
+- **SessionStart** — reads STATE.md, active CHANGE headers, and recovery notices; injects as context
+- **PostToolUse(Write/Edit)** — logs modified files to `.protocol/runtime/<session-id>/`
+- **SessionEnd** — writes a recovery snapshot so crash recovery is possible
 
-No Stop hook. Sessions end cleanly.
+The SessionStart hook loads STATE.md in full and active changes as headers only — full CHANGE content is loaded on demand inside `protocol-work`.
 
 ## Migrating from v1
 
@@ -151,8 +152,11 @@ The original template files are preserved in [`legacy/v1/`](legacy/v1/) for refe
 
 ## Compatibility
 
-- Claude Code CLI: v2.1.x+
-- Node.js: 20+ (for hooks-handlers)
+- Claude Code 2.1.119+
+- macOS or Linux
+- Bash
+- Python 3 (used by hooks for JSON parsing)
+- Git recommended (some features degrade without it)
 - Works with Python, Node.js, Rust, Go projects
 
 ---

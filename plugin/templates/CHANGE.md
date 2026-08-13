@@ -33,13 +33,11 @@ Non-obvious constraints (decisions, locked packages, API contracts).
 
 - [ ] Step 1
 - [ ] Step 2
-- [ ] Tests pass
 - [ ] Verification commands pass
 
 ## Verification
 
-- `npm test`
-- `npm run typecheck`
+<!-- Filled from .protocol/config.yaml commands -->
 
 ## Result
 

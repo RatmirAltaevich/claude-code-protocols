@@ -1,4 +1,10 @@
-# /continuity:protocol-handoff
+---
+name: protocol-handoff
+description: Verify work, update project state, capture decisions and archive completed changes at the end of a task or session.
+disable-model-invocation: true
+---
+
+# Protocol Handoff
 
 End-of-session wrap-up. Updates STATE.md, captures decisions, archives completed changes.
 
@@ -53,7 +59,7 @@ Review what was done this session. Add a DECISIONS.md entry for each non-obvious
 
 **Do not document**: obvious choices, style preferences, things clear from the code, routine task steps.
 
-Determine the next D-NNN number before appending:
+Determine the next D-NNN number:
 
 ```bash
 last_decision=$(
@@ -71,13 +77,14 @@ else
 fi
 ```
 
-Append to `.protocol/DECISIONS.md`:
+Append to the `## Entries` section of `.protocol/DECISIONS.md`:
 
 ```markdown
 ## D-NNN — <title>
 
 Status: Active
 Date: <YYYY-MM-DD>
+Areas: <affected risk categories>
 Related code: `<file or function>`
 
 ### Decision
@@ -93,6 +100,8 @@ Related code: `<file or function>`
 <what breaks if reversed>
 ```
 
+If the new decision is broadly critical, also add a row to the PINNED table.
+
 ---
 
 ## Step 4 — Update STATE.md
@@ -105,7 +114,7 @@ Rewrite `.protocol/STATE.md` to reflect current reality:
 Updated: <YYYY-MM-DD>
 Branch: <current git branch>
 Active change: <CHG-NNN or none>
-Last verified commit: <git rev-parse --short HEAD>
+Last verified: <commit> + <clean|dirty> worktree, <date>, <passed|partial|failed|not-run>
 
 ## Current
 

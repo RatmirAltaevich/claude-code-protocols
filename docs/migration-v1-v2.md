@@ -61,7 +61,9 @@ Keep:
 
 ## CLAUDE.md after migration
 
-After init, CLAUDE.md has a managed block (automatically kept current) and a user section (yours to edit). The managed block replaces the long startup reading protocol from v1.
+After init, CLAUDE.md has a managed block and a user section (yours to edit). The managed block replaces the long startup reading protocol from v1.
+
+The managed block is created during initialization and updated only by `protocol-init` or a future protocol upgrade. It is not automatically kept current between sessions.
 
 The global `~/.claude/CLAUDE.md` is still useful for:
 - MCP tool protocol (codebase-memory-mcp, Context7)

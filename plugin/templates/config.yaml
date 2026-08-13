@@ -18,9 +18,11 @@ navigation:
 
 risk:
   require_approval:
-    - database-migration
-    - authentication
-    - payments
-    - public-api
-    - production
-    - destructive-operation
+    authentication: true
+    authorization: true
+    payments: true
+    data_migration: true
+    public_api: true
+    production: true
+    destructive_operations: true
+    secrets_and_credentials: true

@@ -1,4 +1,10 @@
-# /continuity:protocol-audit
+---
+name: protocol-audit
+description: Perform a read-only consistency audit of Continuity Protocol files and report stale or contradictory documentation.
+disable-model-invocation: true
+---
+
+# Protocol Audit
 
 Audit `.protocol/` for health issues. Read-only — reports findings, makes no changes.
 
@@ -40,7 +46,7 @@ Read the `created:` date from frontmatter. Flag:
 
 ### Check 3 — Decisions without status
 
-For each `## D-NNN` entry in DECISIONS.md: verify it has one of:
+For each `## D-NNN` entry in the `## Entries` section of DECISIONS.md: verify it has one of:
 - `Status: Active`
 - `Status: Superseded`
 - `Status: Retired`
@@ -49,7 +55,17 @@ Flag any entry missing a status line.
 
 ---
 
-### Check 4 — Duplicate information
+### Check 4 — PINNED table coherence
+
+For each row in the `## PINNED` table:
+- Verify the referenced D-NNN entry exists in `## Entries`
+- Verify the related code path exists
+
+Flag broken references.
+
+---
+
+### Check 5 — Duplicate information
 
 Scan CLAUDE.md and STATE.md for content that duplicates what the code already provides. Flag each occurrence:
 
@@ -65,12 +81,11 @@ Note: listing that something *exists* (e.g., "uses Supabase") is fine. Duplicati
 
 ---
 
-### Check 5 — Missing verification commands
+### Check 6 — Missing verification commands
 
 Read `.protocol/config.yaml commands`. For each empty command field:
 
 ```bash
-# Check if a config exists that implies the command should be set
 ls package.json 2>/dev/null && echo "package.json found — test/lint/typecheck may be definable"
 ls pyproject.toml 2>/dev/null && echo "pyproject.toml found — test command may be definable"
 ```
@@ -79,13 +94,13 @@ Flag empty commands when a corresponding project config exists.
 
 ---
 
-### Check 6 — Incomplete changes marked done
+### Check 7 — Incomplete changes marked done
 
 For each active CHANGE.md where `status: done` but unchecked `- [ ]` items remain in the Plan section: flag as inconsistent.
 
 ---
 
-### Check 7 — CLAUDE.md / config.yaml coherence
+### Check 8 — config.yaml / CLAUDE.md coherence
 
 ```bash
 cat .protocol/config.yaml
@@ -98,6 +113,16 @@ Verify:
 - If `documentation.existing_adr` is set: the path exists
 
 Flag any missing files.
+
+---
+
+### Check 9 — Orphaned recovery snapshots
+
+```bash
+ls .protocol/runtime/ 2>/dev/null
+```
+
+For each session directory in `.protocol/runtime/`, check if `recovery.json` exists and is older than 24 hours. Flag as orphaned — the session ended without handoff.
 
 ---
 
@@ -115,11 +140,13 @@ PROTOCOL AUDIT — YYYY-MM-DD
 ✗ ERRORS (<N>)
   DECISIONS.md D-001 Related code: `src/old_handler.py` — file not found
   STATE.md: lists full DB schema (duplicate of migration files)
+  .protocol/runtime/78fe2c9a/: orphaned recovery snapshot (2 days old)
 
 Suggested actions:
   - Run /continuity:protocol-handoff to archive completed changes
   - Add Status: to D-004
-  - Remove schema description from STATE.md, keep only "uses Supabase (users, credits, generations tables)"
+  - Remove schema description from STATE.md
+  - Review or clean up .protocol/runtime/78fe2c9a/
 ```
 
 If everything passes:
