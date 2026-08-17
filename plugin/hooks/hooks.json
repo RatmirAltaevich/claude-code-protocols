@@ -1,5 +1,5 @@
 {
-  "description": "Continuity Protocol hooks — session awareness, change tracking, and crash recovery",
+  "description": "Continuity Protocol hooks — session awareness, risk approval enforcement, change tracking, and crash recovery",
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +7,18 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/guard-risk.sh\"",
             "timeout": 5
           }
         ]

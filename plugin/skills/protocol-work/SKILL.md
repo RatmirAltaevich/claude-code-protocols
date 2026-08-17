@@ -55,6 +55,13 @@ Evaluate the user's request against these criteria:
 
 **Do not rely on literal keyword matching.** Evaluate semantics: a task about "user login" affects `authentication` even if no keyword appears in the request.
 
+Your classification here is the primary control, but it is not the only one: the
+`PreToolUse` hook independently escalates tool calls that match a risk category
+to the user. Expect an approval prompt on those calls even when you judged the
+task Small — that is the hook working, not an error. The hook matches paths and
+commands mechanically, so it catches less than you can; never treat "the hook
+did not stop me" as evidence a change is low-risk.
+
 If the user has already explicitly approved a specific change and its consequences, do not re-request approval. Record the approval in CHANGE.md:
 
 ```yaml

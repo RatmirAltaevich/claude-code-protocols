@@ -57,12 +57,23 @@ run_test "Special path (space+quote) in project dir"  "test-special-path-session
 echo ""
 echo "Crash recovery"
 run_test "Aborted session visible in next SessionStart" "test-crash-recovery.sh"
+run_test "Session never warns about itself"            "test-no-self-recovery-warning.sh"
+
+echo ""
+echo "Context injection"
+run_test "Repository content marked untrusted"         "test-untrusted-data-marker.sh"
+run_test "Active constraints reach the context"        "test-decisions-in-context.sh"
+
+echo ""
+echo "Risk enforcement"
+run_test "PreToolUse guard escalates risk areas"       "test-guard-risk.sh"
 
 echo ""
 echo "Security"
 run_test "Apostrophe in project path (session-start)"  "test-apostrophe-path-session-start.sh"
 run_test "Path traversal in session_id blocked"        "test-session-id-traversal.sh"
-run_test "Non-standard CLAUDE_SESSION_ID no false warn" "test-session-id-normalization-start.sh"
+run_test "Dot-only session_id cannot wipe .protocol"   "test-dot-session-id-no-wipe.sh"
+run_test "Non-standard session_id no false warn"       "test-session-id-normalization-start.sh"
 
 echo ""
 echo "Runtime isolation"

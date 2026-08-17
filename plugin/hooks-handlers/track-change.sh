@@ -3,6 +3,8 @@
 # Writes to .protocol/runtime/<session-id>/tracked-files.txt.
 # Exits silently if .protocol/ does not exist.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 PROTOCOL_DIR="$PROJECT_DIR/.protocol"
 
@@ -12,7 +14,7 @@ fi
 
 input=$(cat)
 
-# Extract fields in separate calls to avoid read splitting on spaces in file paths.
+# Extracted in its own call so paths containing spaces or quotes stay intact.
 file_path=$(python3 -c "
 import sys, json
 try:
@@ -22,27 +24,20 @@ except Exception:
     pass
 " <<< "$input" 2>/dev/null)
 
-# Validate session_id to prevent path traversal via crafted hook payloads.
-session_id=$(python3 -c "
-import sys, json, hashlib, re
-try:
-    d = json.loads(sys.stdin.read())
-    raw = str(d.get('session_id', 'unknown'))
-    if re.fullmatch(r'[A-Za-z0-9._-]{1,128}', raw):
-        print(raw, end='')
-    else:
-        digest = hashlib.sha256(raw.encode()).hexdigest()[:16]
-        print(f'invalid-{digest}', end='')
-except Exception:
-    print('unknown', end='')
-" <<< "$input" 2>/dev/null)
-
 if [ -z "$file_path" ]; then
   exit 0
 fi
 
+session_id=$(printf '%s' "$input" | python3 "$SCRIPT_DIR/_session_id.py" 2>/dev/null)
 SESSION_DIR="$PROTOCOL_DIR/runtime/${session_id:-unknown}"
-mkdir -p "$SESSION_DIR"
+
+mkdir -p "$SESSION_DIR" 2>/dev/null || exit 0
+
+# Defence in depth: never write outside runtime/, whatever the id normalizer let through.
+case "$(cd "$SESSION_DIR" 2>/dev/null && pwd -P)" in
+  "$(cd "$PROTOCOL_DIR/runtime" 2>/dev/null && pwd -P)"/?*) ;;
+  *) exit 0 ;;
+esac
 
 printf '%s\n' "$file_path" >> "$SESSION_DIR/tracked-files.txt"
 sort -u "$SESSION_DIR/tracked-files.txt" -o "$SESSION_DIR/tracked-files.txt" 2>/dev/null || true

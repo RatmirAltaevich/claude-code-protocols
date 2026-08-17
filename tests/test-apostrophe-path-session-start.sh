@@ -24,8 +24,8 @@ cat > "$PROJ/.protocol/runtime/old-session/recovery.json" <<'JSON'
 JSON
 
 output=$(
-  CLAUDE_PROJECT_DIR="$PROJ" CLAUDE_SESSION_ID="new-session" \
-    bash "$REPO/plugin/hooks-handlers/session-start.sh" 2>/dev/null
+  printf '{"hook_event_name":"SessionStart","session_id":"new-session"}' \
+    | CLAUDE_PROJECT_DIR="$PROJ" bash "$REPO/plugin/hooks-handlers/session-start.sh" 2>/dev/null
 )
 
 echo "$output" | grep -q "old-session" || {

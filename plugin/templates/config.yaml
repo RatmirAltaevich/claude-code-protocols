@@ -17,6 +17,9 @@ navigation:
   provider: auto   # auto | codebase-memory | rg
 
 risk:
+  # ask = the PreToolUse hook escalates matching tool calls to you for approval.
+  # off = no enforcement; the categories below are then only advisory to the model.
+  enforcement: ask
   require_approval:
     authentication: true
     authorization: true

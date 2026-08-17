@@ -62,7 +62,7 @@ High-risk (auth, payments, etc.) →  CHANGE.md + plan approval
 Epic (new subsystem)             →  extended planning
 ```
 
-Risk categories are configurable in `.protocol/config.yaml`.
+Risk categories are configurable in `.protocol/config.yaml`, and are enforced by a [PreToolUse hook](#approval-is-enforced-not-requested) rather than by instruction alone.
 
 ## DECISIONS.md — why this matters
 
@@ -128,13 +128,24 @@ Set `navigation.provider: auto` and the skill picks automatically.
 
 ## Hooks
 
-Three lightweight hooks are included:
+Four lightweight hooks are included:
 
-- **SessionStart** — reads STATE.md, active CHANGE headers, and recovery notices; injects as context
+- **SessionStart** — injects STATE.md, active CHANGE headers, active "do not change because" constraints, and recovery notices as context
+- **PreToolUse(Write/Edit/NotebookEdit/Bash)** — escalates tool calls that touch a risk category to you for approval
 - **PostToolUse(Write/Edit)** — logs modified files to `.protocol/runtime/<session-id>/`
 - **SessionEnd** — writes a recovery snapshot so crash recovery is possible
 
-The SessionStart hook loads STATE.md in full and active changes as headers only — full CHANGE content is loaded on demand inside `protocol-work`.
+The SessionStart hook loads STATE.md in full and active changes as headers only — full CHANGE content is loaded on demand inside `protocol-work`. Constraints are injected because a rule that only lives in a file applies only when the model happens to open that file.
+
+### Approval is enforced, not requested
+
+`risk.require_approval` is backed by the PreToolUse hook, which returns a real permission decision. A skill instruction alone is a request the model can decline; the hook stops the call regardless of what the model decided.
+
+The hook matches paths and commands mechanically, so it catches *less* than the model's semantic judgement in `protocol-work` — the two are complementary, and neither alone is sufficient. Tune the categories in `.protocol/config.yaml`, or set `risk.enforcement: off` to disable enforcement entirely.
+
+### Repository content is treated as untrusted
+
+`.protocol/` is committed to git. Anything a contributor — or a cloned repository — puts in STATE.md or DECISIONS.md reaches the model through the SessionStart hook. That content is injected inside labelled `<project-data>` blocks so it arrives as project data to weigh, not as instructions to follow.
 
 ## Migrating from v1
 

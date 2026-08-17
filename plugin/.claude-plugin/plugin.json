@@ -1,7 +1,7 @@
 {
   "name": "continuity",
   "description": "Adaptive project continuity for Claude Code — STATE.md, DECISIONS.md, CHANGE.md workflow that scales process to task size. No duplicate source of truth.",
-  "version": "2.1.5",
+  "version": "2.2.0",
   "author": {
     "name": "Ratmir Petrov",
     "url": "https://github.com/RatmirAltaevich"

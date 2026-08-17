@@ -14,25 +14,24 @@ Use at the end of a session or after a significant task is complete.
 
 ## Step 0 — Load session runtime
 
-Determine `CLAUDE_SESSION_ID` from the environment (or use `unknown` as fallback).
+The session id is **not** available as an environment variable — do not try to
+read one. `CLAUDE_SESSION_ID` does not exist, and guessing produces a directory
+the hooks never look at, so the handoff marker in Step 6 would be written where
+`SessionEnd` cannot find it.
+
+Take the path from the `Session runtime:` line the SessionStart hook put in your
+context. If that line is not present, fall back to the most recently touched
+runtime directory — the hooks create it as soon as the session edits anything:
 
 ```bash
-raw_session_id="${CLAUDE_SESSION_ID:-unknown}"
-
-session_id=$(
-  RAW_SESSION_ID="$raw_session_id" python3 <<'PY'
-import hashlib, os, re
-raw = os.environ["RAW_SESSION_ID"]
-if re.fullmatch(r"[A-Za-z0-9._-]{1,128}", raw):
-    print(raw, end="")
-else:
-    digest = hashlib.sha256(raw.encode()).hexdigest()[:16]
-    print(f"invalid-{digest}", end="")
-PY
+SESSION_DIR=$(
+  ls -dt .protocol/runtime/*/ 2>/dev/null | head -1
 )
-
-SESSION_DIR=".protocol/runtime/$session_id"
+SESSION_DIR="${SESSION_DIR%/}"
 ```
+
+If neither is available, no session runtime exists yet: skip to Step 1 and skip
+Step 6 as well — there is nothing for `SessionEnd` to clean up.
 
 If `$SESSION_DIR/tracked-files.txt` exists, read it. Compare against `git status --short` to confirm which files were actually modified this session. Show the user a combined list.
 
@@ -175,10 +174,14 @@ Leave incomplete changes in `active/`.
 Write a marker so `SessionEnd` knows handoff already ran and skips creating a recovery snapshot:
 
 ```bash
-# $session_id and $SESSION_DIR are set in Step 0 — reuse them.
-mkdir -p "$SESSION_DIR"
-touch "$SESSION_DIR/handoff-complete"
+# $SESSION_DIR is resolved in Step 0 — reuse it, do not recompute an id here.
+# Skip this step entirely if Step 0 found no session runtime.
+[ -n "$SESSION_DIR" ] && touch "$SESSION_DIR/handoff-complete"
 ```
+
+The marker must land in the directory the hooks actually use. Writing it to a
+guessed id means `SessionEnd` never sees it, writes a recovery snapshot anyway,
+and the next session opens with a false "aborted session" warning.
 
 Do not `rm -rf` the directory here — `SessionEnd` will clean it up cleanly when it fires.
 Do not touch other session directories.
